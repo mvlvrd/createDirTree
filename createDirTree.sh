@@ -5,21 +5,23 @@ parse_replacements() {
     for arg in "$@"; do
 	[[ "$arg" != *:* ]] && { echo "Invalid argument '$arg': expected KEY:VALUE" >&2; return 1; }
 	IFS=":" read -r key val <<< "$arg"
+	[[ -z $key ]] && { echo "Invalid: empty key in '$arg'" >&2; return 1; }
 	REPLACEMENTS["$key"]="$val"
     done
 }
 
 print_usage() {
     cat <<EOF
-Usage: $(basename "$0") [KEY:VALUE ...] < tree.txt
+Usage: $(basename "$0") [OPTIONS] [KEY:VALUE ...] < tree.txt
 
 Creates a directory tree from an indented text description read from stdin.
 
+Options:
+  -h        Show this help message and exit
+  -o DIR    Create the dir tree in directory DIR
+
 Arguments:
   KEY:VALUE    Replacement pairs for placeholders in the tree (e.g. name:myapp)
-
-Options:
-  -h, --help   Show this help message and exit
 
 Input format:
   - First line: root directory name, must end with '/'
@@ -46,8 +48,29 @@ Example:
 EOF
 }
 
-[[ "$1" == "-h" || "$1" == "--help" ]] && { print_usage; exit 0; }
-
+while getopts ":ho:" opt; do
+      case $opt in
+	  h)
+	      print_usage
+	      exit 0
+	      ;;
+	  o)
+	      init_dir="$OPTARG"
+	      if [[ -n "$init_dir" ]]; then
+		  cd "$init_dir" || { echo "Error: Cannot cd to '$init_dir'" >&2; exit 1; }
+	      fi
+	      ;;
+	  \?)
+	      echo "Invalid option: -$OPTARG" >&2
+	      exit 1
+	      ;;
+	  :)
+              echo "Option -$OPTARG requires an argument" >&2
+              exit 1
+              ;;
+      esac
+done
+shift $((OPTIND - 1))
 parse_replacements "$@" || exit $?
 
 delta=4
