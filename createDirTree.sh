@@ -75,7 +75,16 @@ parse_replacements "$@" || exit $?
 
 delta=4
 parse_line() {
-    #TODO: Make it work with tree output syntax. Deal with empty input?
+    # Parse a line from the tree structure and extract its level and cleaned name
+    #
+    # Usage: parse_line <line> <level_var> <name_var>
+    #
+    #   <line>      - A line from tree output (e.g., "    ├── src/")
+    #   <level_var> - Name of variable to store the indentation level
+    #   <name_var>  - Name of variable to store the cleaned file/directory name
+    #
+    # Returns: 0 on success, 1 on error (wrong indentation)
+    # TODO: Make it work with tree output syntax. Deal with empty input?
     local leading="${1%%[![:space:]]*}"
     local count="${#leading}"
 
@@ -88,6 +97,20 @@ parse_line() {
 }
 
 clean_name() {
+    # Clean a file/directory name by replacing <placeholder> patterns with values
+    # from the REPLACEMENTS associative array.
+    #
+    # Usage: clean_name <input> <output_var>
+    #
+    #   <input>     - Raw name possibly containing <placeholders> (e.g., "<project dir>/")
+    #   <output_var>- Name of variable to store the cleaned name
+    #
+    # Returns: 0 on success, 1 if an unknown placeholder is encountered
+    #
+    # Example:
+    #   REPLACEMENTS["project dir"]="myapp"
+    #   clean_name "<project dir>/src" result
+    #   # result = "myapp/src"
     local input="$1"
     local output="$1"
     local placeholder replacement
