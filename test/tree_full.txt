@@ -1,0 +1,6 @@
+<name>/
+├── src/
+│   ├── main.sh
+│   └── .gitignore
+└── docs/
+    └── index.md

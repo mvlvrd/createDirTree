@@ -6,7 +6,7 @@ There are alternatives in Python, Rust and so on but a Bash implementation is ea
 ## Usage
 
 ```bash
-./createDirTree.sh [KEY:VALUE ...] < tree.txt
+./createDirTree.sh [OPTIONS] [KEY:VALUE ...] < FILE
 ```
 
 Replacements are passed as `KEY:VALUE` pairs on the command line. The tree structure is read from stdin.
@@ -50,6 +50,7 @@ acme-widget/
 ```
 
 Multiple placeholders per line are supported. An error is raised if a placeholder has no matching replacement.
+Nested placeholders are not supported.
 
 ## Requirements
 
@@ -99,3 +100,7 @@ myapp/
 │   └── index.md
 └── .gitignore
 ```
+
+## Tests
+Simple BATS tests are provided. Run:
+`bats test/tests.bats`

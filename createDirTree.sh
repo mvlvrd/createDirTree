@@ -10,9 +10,19 @@ parse_replacements() {
     done
 }
 
+guess_format() {
+    if [[ "${1:0:4}" == "    " ]]; then
+	pattern="^([[:space:]]*)(.*)$"
+    elif [[ "${1:0:4}" == "├── " ]]; then
+	pattern="^([[:space:]]*[│   ]*[├└]── )(.*)$"
+    else
+	{ echo "Invalid input format: '$1'"; return 1; }
+    fi
+}
+
 print_usage() {
     cat <<EOF
-Usage: $(basename "$0") [OPTIONS] [KEY:VALUE ...] < tree.txt
+Usage: $(basename "$0") [OPTIONS] [KEY:VALUE ...] < FILE
 
 Creates a directory tree from an indented text description read from stdin.
 
@@ -85,13 +95,17 @@ parse_line() {
     #
     # Returns: 0 on success, 1 on error (wrong indentation)
     # TODO: Make it work with tree output syntax. Deal with empty input?
-    local leading="${1%%[![:space:]]*}"
+
+    [[ $1 =~ $pattern ]] || { echo "The input line doesn't have the right format: $1" >&2; return 1; }
+
+    local leading="${BASH_REMATCH[1]}"
+    local name="${BASH_REMATCH[2]}"
     local count="${#leading}"
 
     ((count % delta)) && { echo "Bad syntax: Wrong indentation in line $lineNumber: $1" >&2; return 1; }
 
     printf -v "$2" "%s" $((count/delta))
-    clean_name "${1##*[├└]── }" $3 || return 1
+    clean_name "$name" $3 || return 1
 
     return 0
 }
@@ -127,7 +141,11 @@ read -r rootLine
 clean_name "$rootLine" cleanedRoot
 [[ $cleanedRoot =~ ^[[:space:]] ]] && { echo "Error: Root line starts with spaces: '$rootLine'" >&2 ; exit 1; }
 [[ ! $cleanedRoot =~ /$ ]] && { echo "Error: Root line should end with '/': '$rootLine'" >&2 ; exit 1; }
-mkdir -p "$cleanedRoot" && pushd "$cleanedRoot" > /dev/null || exit 1
+mkdir -p "$cleanedRoot" || exit 1
+
+read -r
+secondLine="$REPLY"
+guess_format "$secondLine" || exit 1
 
 lineNumber=1
 currentLevel=0
@@ -148,6 +166,6 @@ while read -r; do
     else
         touch "$clean_input" || exit 1
     fi
-done
+done < <(echo "$secondLine"; cat)
 
 while popd > /dev/null 2>&1; do :; done

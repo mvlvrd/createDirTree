@@ -1,0 +1,18 @@
+<project dir>/
+    pyproject.toml
+    MANIFEST.in
+    <package dir>/
+        __init__.py
+        library.py
+        mid-end/
+        front-end/
+            package.json
+            tsconfig.json
+            webpack.config.js
+            src/
+                index.ts
+                <component>.ts
+            tests/
+                test1.txt
+                test2.txt
+        back-end/
